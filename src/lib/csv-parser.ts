@@ -78,7 +78,7 @@ export function parseCSV(csvContent: string): RawHolding[] {
   return holdings;
 }
 
-function parseCSVLine(line: string): string[] {
+export function parseCSVLine(line: string): string[] {
   const result: string[] = [];
   let current = '';
   let inQuotes = false;

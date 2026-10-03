@@ -1,5 +1,6 @@
 import { Holding } from '@/types/portfolio';
-import { loadPortfolioFromCSV, parseNumber, normalizeSymbol } from './csv-parser';
+import { loadPortfolioFromCSV } from './csv-loader';
+import { parseNumber, normalizeSymbol } from './csv-parser';
 
 const sectorNormalizeMap: Record<string, string> = {
   'FinancialSector': 'Financial Services',

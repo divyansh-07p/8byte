@@ -4,8 +4,32 @@ import { RawHolding } from '@/types/portfolio';
 import { parseCSVLine } from './csv-parser';
 
 export function loadPortfolioFromCSV(): RawHolding[] {
-  const csvPath = path.join(process.cwd(), '..', '..', 'F9001561_ADDBA737E8_B72562937A.csv');
-  const csvContent = fs.readFileSync(csvPath, 'utf-8');
+  // Try multiple possible locations for the CSV file
+  const possiblePaths = [
+    path.join(process.cwd(), 'public', 'portfolio-data.csv'),
+    path.join(process.cwd(), '..', '..', 'F9001561_ADDBA737E8_B72562937A.csv'),
+    path.join(process.cwd(), 'portfolio-data.csv'),
+  ];
+  
+  let csvContent = '';
+  let found = false;
+  
+  for (const csvPath of possiblePaths) {
+    try {
+      if (fs.existsSync(/*turbopackIgnore: true*/ csvPath)) {
+        csvContent = fs.readFileSync(/*turbopackIgnore: true*/ csvPath, 'utf-8');
+        found = true;
+        break;
+      }
+    } catch {
+      // Continue to next path
+    }
+  }
+  
+  if (!found) {
+    console.warn('CSV file not found, using fallback data');
+    return getFallbackData();
+  }
   
   return parseCSVFromFile(csvContent);
 }
@@ -14,12 +38,14 @@ function parseCSVFromFile(csvContent: string): RawHolding[] {
   const lines = csvContent.trim().split('\n');
   if (lines.length < 2) return [];
   
-  const headers = lines[1].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  // Find the header row (skip the first row which is metadata)
+  let headerRowIndex = 1;
+  const headers = lines[headerRowIndex].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
   
   const holdings: RawHolding[] = [];
   let currentSector = '';
   
-  for (let i = 2; i < lines.length; i++) {
+  for (let i = headerRowIndex + 1; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
     
@@ -93,6 +119,11 @@ function parseCSVFromFile(csvContent: string): RawHolding[] {
   }
   
   return holdings;
+}
+
+function getFallbackData(): RawHolding[] {
+  // Return minimal fallback data if CSV is not available
+  return [];
 }
 
 export function getSectorFromHoldings(holdings: RawHolding[]): string[] {
